@@ -17,6 +17,32 @@ router.get("/:id", async (request, response) => {
   response.send(show);
 });
 
+//GET to show all users who watched this show
+router.get("/:id/users", async (request, response) => {
+  const id = request.params.id;
+
+  const showUsers = await Show.findOne({
+    where: {
+      id: id,
+    },
+    include: User,
+  });
+
+  if (showUsers == null) {
+    response.send(`ERROR No user with id:${id}  found!!`);
+  } else if (showUsers.users == null) {
+    response.send(`0 users have watched ${showUsers.title}`);
+  } else {
+    const arrOfUsers = [];
+    for (let userWatched of showUsers.users) {
+      arrOfUsers.push(userWatched.username);
+    }
+    response.send(
+      `"${showUsers.title}" has been watched by the users: ${arrOfUsers}`
+    );
+  }
+});
+
 // POST
 router.post("/", async (request, response) => {
   await Show.create({
@@ -61,12 +87,8 @@ router.delete("/:id", async (request, response) => {
 });
 //TODO
 
-// GET all users who watched a show
-
 // GET shows of a particular genre (genre in req.query)
 //      For example, /shows/genres/Comedy should return all shows with a genre of Comedy.
-
-// GET all users who watched a show
 
 // PUT
 //    update the title of a show
@@ -83,6 +105,7 @@ router.delete("/:id", async (request, response) => {
 
 // DONE
 
+// GET all users who watched a show
 // GET all shows DONE
 // GET one show DONE
 // DELETE a show DONE

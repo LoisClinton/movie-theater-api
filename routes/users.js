@@ -41,17 +41,6 @@ router.get("/:id/shows", async (request, response) => {
   }
 });
 
-// POST
-router.post("/", async (request, response) => {
-  await User.create({
-    username: request.body.username,
-    password: request.body.password,
-  });
-
-  const user = await User.findAll();
-  response.send(user);
-});
-
 //PUT to edit user
 router.put("/:id", async (request, response) => {
   await User.update(
@@ -87,7 +76,18 @@ router.put("/:iduser/shows/:idshow", async (request, response) => {
   }
 });
 
-//DELETE
+// POST To create a new user
+router.post("/", async (request, response) => {
+  await User.create({
+    username: request.body.username,
+    password: request.body.password,
+  });
+
+  const user = await User.findAll();
+  response.send(user);
+});
+
+//DELETE To delete an account
 router.delete("/:id", async (request, response) => {
   await User.destroy({
     where: {
@@ -103,6 +103,8 @@ router.delete("/:id", async (request, response) => {
 // POST?
 // Use server-side validation in your routes to ensure that:
 //     The username must be an email address.
+
+// Possibly implement a better method that try and catch in my put association request
 
 //DONE
 
