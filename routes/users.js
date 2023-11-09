@@ -3,6 +3,7 @@ const { Show, User } = require("../models/index.js");
 const router = express.Router();
 
 router.use(express.json());
+
 //GET /
 router.get("/", async (request, response) => {
   const user = await User.findAll();
@@ -16,6 +17,7 @@ router.get("/:id", async (request, response) => {
   response.send(user);
 });
 
+//GET to show a users watched shows
 router.get("/:id/shows", async (request, response) => {
   const id = request.params.id;
 
@@ -50,7 +52,7 @@ router.post("/", async (request, response) => {
   response.send(user);
 });
 
-//PUT
+//PUT to edit user
 router.put("/:id", async (request, response) => {
   await User.update(
     {
@@ -67,6 +69,24 @@ router.put("/:id", async (request, response) => {
   response.send(thisUser);
 });
 
+//PUT to add shows to user
+router.put("/:iduser/shows/:idshow", async (request, response) => {
+  const user = await User.findByPk(request.params.iduser);
+  const show = await Show.findByPk(request.params.idshow);
+  try {
+    if (await user.hasShow(show)) {
+      response.send(`${user.username} has already watched ${show.title}!`);
+    } else {
+      await user.addShow(show);
+      response.send(
+        `Successfully added ${show.title} to user:${user.username}'s watched shows!`
+      );
+    }
+  } catch (error) {
+    response.send(`Something went wrong ${console.error(error)}`);
+  }
+});
+
 //DELETE
 router.delete("/:id", async (request, response) => {
   await User.destroy({
@@ -80,17 +100,18 @@ router.delete("/:id", async (request, response) => {
 
 // TODO
 
-// PUT associate a user with a show they have watched (update and add a show if a user has watched it).
-//     For example, a PUT request to /users/2/shows/9 should add the 9th show to the 2nd user.
-
+// POST?
 // Use server-side validation in your routes to ensure that:
 //     The username must be an email address.
 
 //DONE
+
 // GET all users
 // GET one user
 // GET all shows watched by a user (user id in req.params)
 //      For example, /users/2/shows should return all the shows for the 2nd user.
+// PUT associate a user with a show they have watched (update and add a show if a user has watched it).
+//     For example, a PUT request to /users/2/shows/9 should add the 9th show to the 2nd user.
 
 module.exports = router;
 
