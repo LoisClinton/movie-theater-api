@@ -67,9 +67,9 @@ router.put(
   [
     check(
       "title",
-      "title field must be between 5 and 25 characters long and cannot be empty"
+      "title field must be between 3 and 55 characters long and cannot be empty"
     )
-      .isLength({ min: 5, max: 25 })
+      .isLength({ min: 5, max: 55 })
       .not()
       .isEmpty()
       .trim(),
@@ -155,9 +155,9 @@ router.post(
   [
     check(
       "title",
-      "title field must be between 5 and 25 characters long and cannot be empty"
+      "title field must be between 3 and 55 characters long and cannot be empty"
     )
-      .isLength({ min: 5, max: 25 })
+      .isLength({ min: 5, max: 55 })
       .not()
       .isEmpty()
       .trim(),
@@ -168,15 +168,20 @@ router.post(
       .isEmpty(),
   ],
   async (request, response) => {
-    await Show.create({
-      title: request.body.title,
-      genre: request.body.genre,
-      rating: null,
-      available: request.body.available,
-    });
+    const errors = validationResult(request);
+    if (!errors.isEmpty()) {
+      response.send({ error: errors.array() });
+    } else {
+      await Show.create({
+        title: request.body.title,
+        genre: request.body.genre,
+        rating: null,
+        available: request.body.available,
+      });
 
-    const show = await Show.findAll();
-    response.send(show);
+      const show = await Show.findAll();
+      response.send(show);
+    }
   }
 );
 
@@ -192,10 +197,9 @@ router.delete("/:id", async (request, response) => {
 });
 //TODO
 
-// POST Create a show (show "title" must have a minimum of 5 characters and a maximum of 25 characters )
-
 // DONE
 
+// POST Create a show (show "title" must have a minimum of 5 characters and a maximum of 25 characters )
 // PUT avaliable (must be a boolean)
 // PUT rating (must be a number)
 // PUT (endpoint /shows/3/updates/[thing to update]) (i added this part so if you want to update the "available" property key would be /shows/3/updates/avaliable)
@@ -213,4 +217,5 @@ router.delete("/:id", async (request, response) => {
 // PUT The Show Router should update a rating on a specific show using an endpoint.
 //      For example, a PUT request to /shows/4/watched (through table is called watched) would update the 4th show that has been watched.
 //      the “rating” field cannot be empty or contain whitespace.
+// POST Create a show (show "title" must have a minimum of 5 characters and a maximum of 25 characters )
 module.exports = router;

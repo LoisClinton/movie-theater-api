@@ -79,21 +79,41 @@ router.put("/:iduser/shows/:idshow", async (request, response) => {
 
 // body('email').isEmail().withMessage('Not a valid e-mail address');
 // POST To create a new user
-router.post("/", async (request, response) => {
-  await User.create({
-    username: request.body.username,
-    password: request.body.password,
-  });
+router.post(
+  "/",
+  [
+    check(
+      "username",
+      "username must be an email between 5 to 25 characters and cannot be empty"
+    )
+      .isLength({ min: 5, max: 25 })
+      .isEmail()
+      .not()
+      .isEmpty()
+      .trim(),
+    check("password", "password cannot be empty").not().isEmpty().trim(),
+  ],
+  async (request, response) => {
+    const errors = validationResult(request);
+    if (!errors.isEmpty()) {
+      response.send({ error: errors.array() });
+    } else {
+      await User.create({
+        username: request.body.username,
+        password: request.body.password,
+      });
 
-  const user = await User.findAll();
-  response.send(user);
-});
+      const users = await User.findAll();
+      response.send(users);
+    }
+  }
+);
 
 //DELETE To delete an account
 router.delete("/:id", async (request, response) => {
   await User.destroy({
     where: {
-      id: await request.params.id,
+      id: request.params.id,
     },
   });
   console.log("Item deleted");
@@ -102,14 +122,11 @@ router.delete("/:id", async (request, response) => {
 
 // TODO
 
+//DONE
 // POST?
 // Use server-side validation in your routes to ensure that:
 //     The username must be an email address.
-
 // Possibly implement a better method that try and catch in my put association request
-
-//DONE
-
 // GET all users
 // GET one user
 // GET all shows watched by a user (user id in req.params)
