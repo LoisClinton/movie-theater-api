@@ -71,8 +71,9 @@ router.put(
     )
       .isLength({ min: 5, max: 25 })
       .not()
-      .isEmpty(),
-    check("genre", "genre cannot be empty ").not().isEmpty(),
+      .isEmpty()
+      .trim(),
+    check("genre", "genre cannot be empty ").not().isEmpty().trim(),
     check(
       "rating",
       "rating field must be a number between 0 and 100 and cannot be empty"
@@ -149,17 +150,35 @@ router.put(
 // Good idea but i scrapped it
 
 // POST
-router.post("/", async (request, response) => {
-  await Show.create({
-    title: request.body.title,
-    genre: request.body.genre,
-    rating: request.body.rating,
-    available: request.body.available,
-  });
+router.post(
+  "/",
+  [
+    check(
+      "title",
+      "title field must be between 5 and 25 characters long and cannot be empty"
+    )
+      .isLength({ min: 5, max: 25 })
+      .not()
+      .isEmpty()
+      .trim(),
+    check("genre", "genre cannot be empty ").not().isEmpty().trim(),
+    check("available", "available field must be a boolean and cannot be empty")
+      .isBoolean()
+      .not()
+      .isEmpty(),
+  ],
+  async (request, response) => {
+    await Show.create({
+      title: request.body.title,
+      genre: request.body.genre,
+      rating: null,
+      available: request.body.available,
+    });
 
-  const show = await Show.findAll();
-  response.send(show);
-});
+    const show = await Show.findAll();
+    response.send(show);
+  }
+);
 
 //DELETE
 router.delete("/:id", async (request, response) => {
