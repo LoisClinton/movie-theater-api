@@ -1,6 +1,7 @@
 const express = require("express");
 const { Show, User } = require("../models/index.js");
 const router = express.Router();
+const { check, validationResult } = require("express-validator");
 
 router.use(express.json());
 
@@ -76,6 +77,7 @@ router.put("/:iduser/shows/:idshow", async (request, response) => {
   }
 });
 
+// body('email').isEmail().withMessage('Not a valid e-mail address');
 // POST To create a new user
 router.post("/", async (request, response) => {
   await User.create({
