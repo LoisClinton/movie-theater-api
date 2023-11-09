@@ -16,6 +16,29 @@ router.get("/:id", async (request, response) => {
   response.send(user);
 });
 
+router.get("/:id/shows", async (request, response) => {
+  const id = request.params.id;
+
+  const userShows = await User.findOne({
+    where: {
+      id: id,
+    },
+    include: Show,
+  });
+
+  if (userShows == null) {
+    response.send(`ERROR No user with id:${id}  found!!`);
+  } else if (userShows.shows == null) {
+    response.send(`${userShows.username} has watched: 0 shows`);
+  } else {
+    const arrOfShows = [];
+    for (let showWatched of userShows.shows) {
+      arrOfShows.push(showWatched.title);
+    }
+    response.send(`user: ${userShows.username} has watched: ${arrOfShows}`);
+  }
+});
+
 // POST
 router.post("/", async (request, response) => {
   await User.create({
@@ -57,9 +80,6 @@ router.delete("/:id", async (request, response) => {
 
 // TODO
 
-// GET all shows watched by a user (user id in req.params)
-//      For example, /users/2/shows should return all the shows for the 2nd user.
-
 // PUT associate a user with a show they have watched (update and add a show if a user has watched it).
 //     For example, a PUT request to /users/2/shows/9 should add the 9th show to the 2nd user.
 
@@ -69,6 +89,8 @@ router.delete("/:id", async (request, response) => {
 //DONE
 // GET all users
 // GET one user
+// GET all shows watched by a user (user id in req.params)
+//      For example, /users/2/shows should return all the shows for the 2nd user.
 
 module.exports = router;
 
