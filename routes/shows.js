@@ -300,9 +300,9 @@ router.delete("/:id", async (request, response) => {
   response.send(await Show.findAll());
 });
 
-module.exports = router;
-
 // TODO
 // Implement update post validation (to have optional fields)
 // Try to add validation where not only science Fiction passes but science fiction passes
 // Remove custom validators that have async and dont need it
+
+module.exports = router;
