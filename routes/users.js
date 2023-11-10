@@ -205,7 +205,7 @@ router.put(
   }
 );
 
-// POST to create a new user (need to add validation)
+// POST to create a new user (done)
 router.post(
   "/",
   [
@@ -218,7 +218,16 @@ router.post(
       .not()
       .isEmpty()
       .trim(),
-    check("password", "password cannot be empty").not().isEmpty().trim(),
+    check("password").custom(async (value) => {
+      // /^(?=.*\d)(?=.*[a-zA-Z]).{8,}$/gm   --regex to meet the password criteria
+      const isValid = /^(?=.*\d)(?=.*[a-zA-Z]).{8,}$/gm.test(value);
+      if (!isValid) {
+        throw new Error("Enter a Valid Password!");
+      }
+    }).withMessage(`Password must contain:
+   at least 8 characters
+   must contain at least 1 uppercase letter, 1 lowercase letter, and 1 number
+   Can contain special characters`),
   ],
   async (request, response) => {
     const errors = validationResult(request);
@@ -236,7 +245,7 @@ router.post(
   }
 );
 
-//DELETE To delete a user account
+//DELETE To delete a user account (done)
 router.delete("/:id", async (request, response) => {
   await User.destroy({
     where: {
@@ -246,7 +255,5 @@ router.delete("/:id", async (request, response) => {
   console.log("Item deleted");
   response.send(await User.findAll());
 });
-
-// added password validation to user update request (PUT) and to user creation (POST)
 
 module.exports = router;
