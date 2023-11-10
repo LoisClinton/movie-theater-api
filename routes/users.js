@@ -63,7 +63,7 @@ router.get(
   }
 );
 
-//GET a users watched shows.
+//GET a users watched shows (done)
 router.get(
   "/:id/shows",
   [
@@ -109,7 +109,7 @@ router.get(
   }
 );
 
-//PUT to edit user by id
+//PUT to edit user by id (done)
 router.put(
   "/:id",
   [
@@ -127,13 +127,16 @@ router.put(
       .not()
       .isEmpty()
       .withMessage("Email cannot be empty!"),
-    check("password")
-      .custom
-      // /^(?=.*\d)(?=.*[a-zA-Z]).{8,}$/gm   --regex to meet that criteria
-      ().withMessage(`Password must contain:
-- at least 8 characters
-- must contain at least 1 uppercase letter, 1 lowercase letter, and 1 number
-- Can contain special characters`),
+    check("password").custom(async (value) => {
+      // /^(?=.*\d)(?=.*[a-zA-Z]).{8,}$/gm   --regex to meet the password criteria
+      const isValid = /^(?=.*\d)(?=.*[a-zA-Z]).{8,}$/gm.test(value);
+      if (!isValid) {
+        throw new Error("Enter a Valid Password!");
+      }
+    }).withMessage(`Password must contain:
+ at least 8 characters
+ must contain at least 1 uppercase letter, 1 lowercase letter, and 1 number
+ Can contain special characters`),
   ],
   async (request, response) => {
     const errors = validationResult(request);
@@ -152,30 +155,57 @@ router.put(
         }
       );
       const thisUser = await User.findByPk(request.params.id);
-      response.send(thisUser);
+      response.send({
+        username: thisUser.username,
+        password: thisUser.password,
+      });
     }
   }
 );
 
-//PUT to add a show to a user
-router.put("/:iduser/shows/:idshow", async (request, response) => {
-  const user = await User.findByPk(request.params.iduser);
-  const show = await Show.findByPk(request.params.idshow);
-  try {
-    if (await user.hasShow(show)) {
-      response.send(`${user.username} has already watched ${show.title}!`);
+//PUT to add a show to a user (done)
+router.put(
+  "/:iduser/shows/:idshow",
+  [
+    check("iduser")
+      .custom(async (value) => {
+        const userExists = await User.findOne({ where: { id: value } });
+        if (!userExists) {
+          throw new Error("There is no user with this id in the system!");
+        }
+      })
+      .withMessage("There is no user with this id in the system!"),
+    check("idshow")
+      .custom(async (value) => {
+        const showExists = await Show.findOne({ where: { id: value } });
+        if (!showExists) {
+          throw new Error("There is no show with this id in the system!");
+        }
+      })
+      .withMessage("There is no show with this id in the system!"),
+  ],
+  async (request, response) => {
+    const errors = validationResult(request);
+    if (!errors.isEmpty()) {
+      response.send({ error: errors.array() });
     } else {
-      await user.addShow(show);
-      response.send(
-        `Successfully added ${show.title} to user:${user.username}'s watched shows!`
-      );
+      const user = await User.findByPk(request.params.iduser);
+      const show = await Show.findByPk(request.params.idshow);
+      if (await user.hasShow(show)) {
+        response.send(
+          `${user.username} has already watched the show:"${show.title}"  `
+        );
+      } else {
+        await user.addShow(show);
+        response.send(
+          `Successfully added ${show.title} to user:${user.username}'s watched shows!`
+        );
+      }
     }
-  } catch (error) {
-    response.send(`Something went wrong ${console.error(error)}`);
   }
-});
+);
 
-// POST to create a new user
+// POST to create a new user (need to add validation)
 router.post(
   "/",
   [
@@ -217,10 +247,6 @@ router.delete("/:id", async (request, response) => {
   response.send(await User.findAll());
 });
 
-// TODO
-// editied get all to only return the users usernames
-// added a personal Get all with a password to get all
-// editied get by Id to only return the users username
-// added validation checks to check if there is a user with specified id
-// added an admin method that returns the whole user and their associated shows
+// added password validation to user update request (PUT) and to user creation (POST)
+
 module.exports = router;
