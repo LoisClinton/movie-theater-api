@@ -146,8 +146,6 @@ router.put(
     }
   }
 );
-// PUT (endpoint /shows/3/updates/key) (i added the key part so if you want to update the "available" property key would be /shows/3/updates/avaliable)
-// Good idea but i scrapped it
 
 // POST
 router.post(
@@ -195,27 +193,9 @@ router.delete("/:id", async (request, response) => {
   console.log("Item deleted");
   response.send(await Show.findAll());
 });
+
 //TODO
 
 // DONE
 
-// POST Create a show (show "title" must have a minimum of 5 characters and a maximum of 25 characters )
-// PUT avaliable (must be a boolean)
-// PUT rating (must be a number)
-// PUT (endpoint /shows/3/updates/[thing to update]) (i added this part so if you want to update the "available" property key would be /shows/3/updates/avaliable)
-//    update the title of a show (a show
-//    update the "available" property OR "status" of a show
-//    For example, a PUT request with the endpoint /shows/3/updates should be able to update the 3rd shows available to “true” or “false.
-//    If theres a request to update the "available" property of a show, the "available" property field cannot be empty or contain whitespace and must be Boolean.
-//    The "available" property must be a minimum of 5 characters and a maximum of 25 characters
-// GET shows of a particular genre (genre in req.query)
-//      For example, /shows/genres/Comedy should return all shows with a genre of Comedy.
-// GET all users who watched a show
-// GET all shows DONE
-// GET one show DONE
-// DELETE a show DONE
-// PUT The Show Router should update a rating on a specific show using an endpoint.
-//      For example, a PUT request to /shows/4/watched (through table is called watched) would update the 4th show that has been watched.
-//      the “rating” field cannot be empty or contain whitespace.
-// POST Create a show (show "title" must have a minimum of 5 characters and a maximum of 25 characters )
 module.exports = router;

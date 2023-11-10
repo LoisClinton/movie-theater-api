@@ -5,61 +5,159 @@ const { check, validationResult } = require("express-validator");
 
 router.use(express.json());
 
-//GET /
+//GET All (done)
 router.get("/", async (request, response) => {
   const user = await User.findAll();
-  response.send(user);
-});
-
-// GET /:id
-router.get("/:id", async (request, response) => {
-  const id = request.params.id;
-  const user = await User.findByPk(id);
-  response.send(user);
-});
-
-//GET to show a users watched shows
-router.get("/:id/shows", async (request, response) => {
-  const id = request.params.id;
-
-  const userShows = await User.findOne({
-    where: {
-      id: id,
-    },
-    include: Show,
-  });
-
-  if (userShows == null) {
-    response.send(`ERROR No user with id:${id}  found!!`);
-  } else if (userShows.shows == null) {
-    response.send(`${userShows.username} has watched: 0 shows`);
-  } else {
-    const arrOfShows = [];
-    for (let showWatched of userShows.shows) {
-      arrOfShows.push(showWatched.title);
-    }
-    response.send(`user: ${userShows.username} has watched: ${arrOfShows}`);
+  const usernameArr = [];
+  for (let person of user) {
+    let tempObj = {};
+    tempObj.id = person.id;
+    tempObj.username = person.username;
+    usernameArr.push(tempObj);
   }
+  response.send(usernameArr);
 });
 
-//PUT to edit user
-router.put("/:id", async (request, response) => {
-  await User.update(
-    {
-      username: request.body.username,
-      password: request.body.password,
-    },
-    {
-      where: {
-        id: request.params.id,
-      },
+//GET All Admin (done)
+router.get(
+  "/admin",
+  [
+    check("adminPassword", "you're not authorized to see this content")
+      .not()
+      .isEmpty()
+      .equals("A+?db4?aQ2d{k"),
+  ],
+  async (request, response) => {
+    const errors = validationResult(request);
+    if (!errors.isEmpty()) {
+      response.send({ error: errors.array() });
+    } else {
+      const user = await User.findAll({ include: Show });
+      response.send(user);
     }
-  );
-  const thisUser = await User.findByPk(request.params.id);
-  response.send(thisUser);
-});
+  }
+);
 
-//PUT to add shows to user
+// GET By Id (done)
+router.get(
+  "/:id",
+  [
+    check("id")
+      .custom(async (value) => {
+        const userExists = await User.findOne({ where: { id: value } });
+        if (!userExists) {
+          throw new Error("There is no user with this id in the system!");
+        }
+      })
+      .withMessage("There is no user with this id in the system!"),
+  ],
+  async (request, response) => {
+    const errors = validationResult(request);
+    if (!errors.isEmpty()) {
+      response.send({ error: errors.array() });
+    } else {
+      const id = request.params.id;
+      const user = await User.findByPk(id);
+      response.send({ username: user.username });
+    }
+  }
+);
+
+//GET a users watched shows.
+router.get(
+  "/:id/shows",
+  [
+    check("id")
+      .custom(async (value) => {
+        const userExists = await User.findOne({ where: { id: value } });
+        if (!userExists) {
+          throw new Error("There is no user with this id in the system!");
+        }
+      })
+      .withMessage("There is no user with this id in the system!")
+      .custom(async (value) => {
+        const userShows = await User.findOne({
+          where: {
+            id: value,
+          },
+          include: Show,
+        });
+        if (userShows.shows.length == 0) {
+          throw new Error("This user hasnt watched any shows yet!");
+        }
+      })
+      .withMessage("This user hasnt watched any shows yet!"),
+  ],
+  async (request, response) => {
+    const errors = validationResult(request);
+    if (!errors.isEmpty()) {
+      response.send({ error: errors.array() });
+    } else {
+      const id = request.params.id;
+      const userShows = await User.findOne({
+        where: {
+          id: id,
+        },
+        include: Show,
+      });
+      const arrOfShows = [];
+      for (let showWatched of userShows.shows) {
+        arrOfShows.push(showWatched.title);
+      }
+      response.send(`user: ${userShows.username} has watched: ${arrOfShows}`);
+    }
+  }
+);
+
+//PUT to edit user by id
+router.put(
+  "/:id",
+  [
+    check("id")
+      .custom(async (value) => {
+        const userExists = await User.findOne({ where: { id: value } });
+        if (!userExists) {
+          throw new Error("There is no user with this id in the system!");
+        }
+      })
+      .withMessage("There is no user with this id in the system!"),
+    check("username")
+      .isEmail()
+      .withMessage("Please enter a valid email address!")
+      .not()
+      .isEmpty()
+      .withMessage("Email cannot be empty!"),
+    check("password")
+      .custom
+      // /^(?=.*\d)(?=.*[a-zA-Z]).{8,}$/gm   --regex to meet that criteria
+      ().withMessage(`Password must contain:
+- at least 8 characters
+- must contain at least 1 uppercase letter, 1 lowercase letter, and 1 number
+- Can contain special characters`),
+  ],
+  async (request, response) => {
+    const errors = validationResult(request);
+    if (!errors.isEmpty()) {
+      response.send({ error: errors.array() });
+    } else {
+      await User.update(
+        {
+          username: request.body.username,
+          password: request.body.password,
+        },
+        {
+          where: {
+            id: request.params.id,
+          },
+        }
+      );
+      const thisUser = await User.findByPk(request.params.id);
+      response.send(thisUser);
+    }
+  }
+);
+
+//PUT to add a show to a user
 router.put("/:iduser/shows/:idshow", async (request, response) => {
   const user = await User.findByPk(request.params.iduser);
   const show = await Show.findByPk(request.params.idshow);
@@ -77,8 +175,7 @@ router.put("/:iduser/shows/:idshow", async (request, response) => {
   }
 });
 
-// body('email').isEmail().withMessage('Not a valid e-mail address');
-// POST To create a new user
+// POST to create a new user
 router.post(
   "/",
   [
@@ -109,7 +206,7 @@ router.post(
   }
 );
 
-//DELETE To delete an account
+//DELETE To delete a user account
 router.delete("/:id", async (request, response) => {
   await User.destroy({
     where: {
@@ -121,31 +218,9 @@ router.delete("/:id", async (request, response) => {
 });
 
 // TODO
-
-//DONE
-// POST?
-// Use server-side validation in your routes to ensure that:
-//     The username must be an email address.
-// Possibly implement a better method that try and catch in my put association request
-// GET all users
-// GET one user
-// GET all shows watched by a user (user id in req.params)
-//      For example, /users/2/shows should return all the shows for the 2nd user.
-// PUT associate a user with a show they have watched (update and add a show if a user has watched it).
-//     For example, a PUT request to /users/2/shows/9 should add the 9th show to the 2nd user.
-
+// editied get all to only return the users usernames
+// added a personal Get all with a password to get all
+// editied get by Id to only return the users username
+// added validation checks to check if there is a user with specified id
+// added an admin method that returns the whole user and their associated shows
 module.exports = router;
-
-//VALIDATION:
-
-// isEmail(options?: {
-//     allow_display_name?: boolean;
-//     allow_utf8_local_part?: boolean;
-//     require_tld?: boolean;
-//     ignore_max_length?: boolean;
-//     allow_ip_domain?: boolean;
-//     domain_specific_validation?: boolean;
-//     blacklisted_chars?: string;
-//     host_blacklist?: string[];
-//     host_whitelist?: string[];
-//   }): ValidationChain
