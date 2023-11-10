@@ -23,9 +23,9 @@ router.get(
   "/admin",
   [
     check("adminPassword", "you're not authorized to see this content")
+      .equals("A+?db4?aQ2d{k")
       .not()
-      .isEmpty()
-      .equals("A+?db4?aQ2d{k"),
+      .isEmpty(),
   ],
   async (request, response) => {
     const errors = validationResult(request);
@@ -256,4 +256,7 @@ router.delete("/:id", async (request, response) => {
   response.send(await User.findAll());
 });
 
+// TODO
+// Implement .matches() instead of custom validator in my validators that check passwords
+// Remove custom validators that have async and dont need it
 module.exports = router;
